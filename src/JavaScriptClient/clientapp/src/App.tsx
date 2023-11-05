@@ -1,67 +1,67 @@
 import {PropsWithChildren, useState} from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
-import {Button, Col, Container, Row} from "react-bootstrap";
+import './App.css';
+import {Button, Col, Container, Nav, Navbar, NavDropdown, Row} from "react-bootstrap";
+import {useAuthContext, AuthProvider} from "./auth/AuthUtils.tsx";
 
-
-let userClaims:any = null;
-
-(async function () {
-  var req = new Request("/bff/user", {
-    headers: new Headers({
-      "X-CSRF": "1",
-    }),
-  });
-
-  try {
-    var resp = await fetch(req);
-    if (resp.ok) {
-      userClaims = await resp.json();
-
-      console.log("user logged in", userClaims);
-    } else if (resp.status === 401) {
-      console.log("user not logged in");
-    }
-  } catch (e) {
-    console.log("error checking user status");
-  }
-})();
-
-function login() {
-  window.location.href = "/bff/login";
-}
-
-function logout() {
-  if (userClaims) {
-    var logoutUrl = userClaims.find(
-      (claim) => claim.type === "bff:logout_url"
-    ).value;
-    window.location = logoutUrl;
-  } else {
-    window.location.href = "/bff/logout";
-  }
-}
 
 function DisplayContainer(props:PropsWithChildren) {
+  
+  const authContext = useAuthContext();
+  
   return (
-    <Container>
-      <Row>
-        <Col>{props.children}</Col>
-      </Row>
-    </Container>
+    <>
+      <Navbar fixed="top" expand="lg" className="bg-body-tertiary">
+        <Container>
+          <Navbar.Brand href="#home">React-Bootstrap</Navbar.Brand>
+          <Navbar.Toggle aria-controls="basic-navbar-nav" />
+          <Navbar.Collapse id="basic-navbar-nav">
+            <Nav className="me-auto">
+              <Nav.Link href="#home">Home</Nav.Link>
+              <Nav.Link href="#link">Link</Nav.Link>
+              <NavDropdown title="Dropdown" id="basic-nav-dropdown">
+                <NavDropdown.Item href="#action/3.1">Action</NavDropdown.Item>
+                <NavDropdown.Item href="#action/3.2">
+                  Another action
+                </NavDropdown.Item>
+                <NavDropdown.Item href="#action/3.3">Something</NavDropdown.Item>
+                <NavDropdown.Divider />
+                <NavDropdown.Item href="#action/3.4">
+                  Separated link
+                </NavDropdown.Item>
+              </NavDropdown>
+            </Nav>
+            <Nav>
+              { authContext.userStatus.status === 'authenticated' ?
+                <NavDropdown title={authContext.userStatus.PersonName} id="basic-nav-dropdown">
+                  <NavDropdown.Item  onClick={() => authContext.logout()}>
+                    logout 
+                  </NavDropdown.Item>
+                </NavDropdown>
+                :  
+                <Button variant="outline-primary" onClick={() => authContext.login()}>
+                  login
+                </Button>
+              }
+            </Nav>
+          </Navbar.Collapse>
+        </Container>
+      </Navbar>
+      <Container>
+        <Row>
+          <Col>{props.children}</Col>
+        </Row>
+      </Container>
+    </>
+
   )
 }
-function App() {
+function AppDisplay() {
   const [count, setCount] = useState(0)
 
   return (
     <DisplayContainer>
-      <Button variant="outline-primary" onClick={() => login()}>
-        login
-      </Button>
-      <Button variant="outline-secondary" onClick={() => logout()}>
-        logout
-      </Button>
       <div>
         <a href="https://vitejs.dev" target="_blank">
           <img src={viteLogo} className="logo" alt="Vite logo" />
@@ -86,4 +86,11 @@ function App() {
   )
 }
 
+function App() {
+  return (
+    <AuthProvider>
+      <AppDisplay />
+    </AuthProvider>
+    )
+}
 export default App

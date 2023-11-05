@@ -3,7 +3,6 @@ using System.Security.Claims;
 using Duende.Bff.Yarp;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Headers;
-using Microsoft.Extensions.FileProviders;
 using Microsoft.Net.Http.Headers;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -101,11 +100,47 @@ else
 
 app.Run();
 
-[Authorize] 
 static IResult LocalIdentityHandler(ClaimsPrincipal user)
+{
+    if (user.Identity?.IsAuthenticated ?? false)
+    {
+        return Results.Ok(new AuthStatus()
+        {
+            IsAuthenticated = true,
+            Details = new AuthDetails(
+                user.FindFirst("name")?.Value ?? user.FindFirst("sub")?.Value ?? "unknown",
+                user.FindFirst("bff:logout_url")?.Value ?? "/bff/logout")
+        });
+
+    }
+    return Results.Ok(new AuthStatus()
+    {
+        IsAuthenticated = false
+    });
+}
+
+[Authorize] 
+static IResult LocalIdentityHandler2(ClaimsPrincipal user)
 {
     var name = user.FindFirst("name")?.Value ?? user.FindFirst("sub")?.Value;
     return Results.Json(new { message = "Local API Success!", user = name });
 }
 
+public class AuthStatus
+{
+    public bool IsAuthenticated { get; set; }
+    public AuthDetails Details { get; set; } = null;
+}
+
+public class AuthDetails
+{
+    public AuthDetails(string loginName, string logoutUrl)
+    {
+        LoginName = loginName;
+        LogoutUrl = logoutUrl;
+    }
+
+    public string LoginName { get; set; }
+    public string LogoutUrl { get; set; }
+}
 
