@@ -1,13 +1,36 @@
-import {PropsWithChildren, useState} from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import {PropsWithChildren} from 'react'
 import './App.css';
 import {Button, Col, Container, Nav, Navbar, NavDropdown, Row} from "react-bootstrap";
 import {useAuthContext, AuthProvider} from "./auth/AuthUtils.tsx";
+import {useData} from "./utilities/data/DataUtilities.tsx";
 
+
+type HomeData = {
+  companyName: string;
+  companyId: number;
+}
+function HomeView() {
+  const authContext = useAuthContext();
+
+  const homeContext = useData<HomeData>('/remote/home');
+  return (
+    <div>
+      {authContext.userStatus.status === 'authenticated' ?
+          <div>
+            <h1>{authContext.userStatus.PersonName}</h1>
+            <p>{homeContext.kind === 'empty'
+            ? (<span>Nothing</span>)
+            : (<span>{homeContext.result.companyName}</span>)}</p>
+          </div>
+          :
+          <h1>Please login</h1>
+      }
+    </div>
+  )
+}
 
 function DisplayContainer(props:PropsWithChildren) {
-  
+
   const authContext = useAuthContext();
   
   return (
@@ -58,30 +81,13 @@ function DisplayContainer(props:PropsWithChildren) {
   )
 }
 function AppDisplay() {
-  const [count, setCount] = useState(0)
+  //const [count, setCount] = useState(0)
 
   return (
     <DisplayContainer>
       <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        <HomeView />
       </div>
-      <h1>Vite + React hot</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
     </DisplayContainer>
   )
 }
